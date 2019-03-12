@@ -13,13 +13,13 @@ public class Blob : MonoBehaviour
     public float Factor;
 
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         Factor = Radius * Radius;
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
         if (transform.hasChanged)
         {
@@ -34,9 +34,10 @@ public class Blob : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    protected virtual void OnDrawGizmos()
     {
-        Gizmos.color = new Color(1, 1, 1, 0.5f);
-        Gizmos.DrawSphere(transform.position, Radius*Container.transform.localScale.x);
+        Gizmos.color = Container == null ? new Color(1, 0, 0, 0.5f) : new Color(1, 1, 1, 0.5f);
+        float scale = Container == null ? 5 : Container.transform.localScale.x;
+        Gizmos.DrawSphere(transform.position, Radius*scale);
     }
 }
