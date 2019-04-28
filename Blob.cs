@@ -40,4 +40,11 @@ public class Blob : MonoBehaviour
         float scale = Container == null ? 5 : Container.transform.localScale.x;
         Gizmos.DrawSphere(transform.position, Radius*scale);
     }
+
+    protected virtual void OnDrawGizmosSelected()
+    {
+        Gizmos.color = new Color(0.99f, 0.4f, 0);
+        float scale = Container == null ? 5 : Container.transform.localScale.x;
+        Gizmos.DrawWireSphere(transform.position, Radius*scale*1.3f);
+    }
 }

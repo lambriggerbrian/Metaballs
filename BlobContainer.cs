@@ -4,14 +4,21 @@ using UnityEngine;
 
 public class BlobContainer : MonoBehaviour
 {
+    public enum OptimizationType
+    {
+        Unoptimized,
+        RunOnChange
+    }
+
     public bool ShowGrid = false;
 
     // Grid properties
     private MarchingGrid Grid;
     public Vector3 Size; // Recommended Size:Resolution ratio is 1:0.025
-    [Range(0.001f,1)]
-    public float Resolution;
+    [Range(1,30)]
+    public int Subdivisions;
     public float Threshold;
+    public OptimizationType optimization = OptimizationType.RunOnChange;
 
     // Compute Shader properties
     public ComputeShader ComputeShader;
@@ -28,15 +35,16 @@ public class BlobContainer : MonoBehaviour
         foreach (Blob blob in Blobs) blob.Container = this;
     }
 
-    void Start()
+    private void Start()
     {
         Grid = new MarchingGrid(this, ComputeShader);
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (!NeedsUpdate) return;
+        // If there's no change, we don't need to update mesh
+        if (optimization == OptimizationType.RunOnChange && !NeedsUpdate) return;
 
         Grid.EvaluateAll(Blobs);
 
@@ -65,7 +73,7 @@ public class BlobContainer : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = new Color(0.99f, 0.4f, 0);
-        Gizmos.DrawWireCube(transform.position, transform.localScale);
+        Gizmos.DrawWireCube(transform.position, Vector3.Scale(Size, transform.localScale));
     }
 
     public Material GridMaterial

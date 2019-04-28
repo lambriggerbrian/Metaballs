@@ -20,7 +20,7 @@ public class BlobPatrol : Blob
     protected override void Update()
     {
         float t = ScaleTime ? Speed * ((Mathf.Sin(Time.time - startTime) + 1) / 2) : Speed * Mathf.Sin(Time.time - startTime);
-        transform.position = Vector3.Lerp(origin, Target, t);
+        if (Active) transform.position = Vector3.Lerp(origin, Target, t);
 
         base.Update();
     }

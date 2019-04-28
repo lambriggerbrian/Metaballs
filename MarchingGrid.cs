@@ -34,9 +34,9 @@ public class MarchingGrid
         this.shader = shader;
 
         // Get Num of Cubes in each axis by dividing by resolution 
-        XCubes = Mathf.RoundToInt(container.Size.x / container.Resolution);
-        YCubes = Mathf.RoundToInt(container.Size.y / container.Resolution);
-        ZCubes = Mathf.RoundToInt(container.Size.z / container.Resolution);
+        XCubes = Mathf.RoundToInt(container.Size.x * (container.Subdivisions+1));
+        YCubes = Mathf.RoundToInt(container.Size.y * (container.Subdivisions+1));
+        ZCubes = Mathf.RoundToInt(container.Size.z * (container.Subdivisions+1));
 
         GridLines = new List<Vector3>();
         Vertices = new List<Vector3>();
@@ -101,8 +101,12 @@ public class MarchingGrid
         shader.SetInt("yCubes", YCubes);
         shader.SetFloat("threshold", container.Threshold);
 
-        // Why waste time with lot instruction to lot data when few instruction do trick
-        shader.Dispatch(shaderKernel, XCubes / 8, YCubes / 8, ZCubes / 8);
+        int xThreads = XCubes / 8 >= 8 ? XCubes / 8 : 8;
+        int yThreads = YCubes / 8 >= 8 ? YCubes / 8 : 8;
+        int zThreads = ZCubes / 8 >= 8 ? ZCubes / 8 : 8;
+
+        // Why waste time with many instruction to many data when few instruction do trick
+        shader.Dispatch(shaderKernel, xThreads, yThreads, zThreads);
 
         GPUVertices[] output = new GPUVertices[gpuBuffers.VertBuffer.count];
         gpuBuffers.VertBuffer.GetData(output);
@@ -150,13 +154,13 @@ public class MarchingGrid
         };
 
         // Scale vertex map
-        for (int i=0; i<8; ++i)
+        for (int i = 0; i < 8; ++i)
         {
             // Vertices are offsets from center of grid cube
-            vertMap[i] /= 2;
-            vertMap[i] = new Vector3(vertMap[i].x / XCubes,
-                vertMap[i].y / YCubes,
-                vertMap[i].z / ZCubes);
+            vertMap[i] /= 2f;
+            vertMap[i] = new Vector3(vertMap[i].x / (container.Subdivisions+1),
+                vertMap[i].y / (container.Subdivisions+1),
+                vertMap[i].z / (container.Subdivisions+1));
         }
     }
 
@@ -164,6 +168,11 @@ public class MarchingGrid
     private void instantiatePositionMap()
     {
         cubeMap = new Vector3[XCubes, YCubes, ZCubes];
+        float hCube = vertMap[6].x;
+        float cubeSize = hCube * 2;
+        float x0 = ((float)container.Size.x / 2);
+        float y0 = ((float)container.Size.y / 2);
+        float z0 = ((float)container.Size.z / 2);
 
         for (int x = 0; x < XCubes; x++)
         {
@@ -172,9 +181,9 @@ public class MarchingGrid
                 for (int z = 0; z < ZCubes; z++)
                 {
 
-                    float xCoord = ((float)x / XCubes) - 0.5f;
-                    float yCoord = ((float)y / YCubes) - 0.5f;
-                    float zCoord = ((float)z / ZCubes) - 0.5f;
+                    float xCoord = (x * cubeSize) + hCube - x0;
+                    float yCoord = (y * cubeSize) + hCube - y0;
+                    float zCoord = (z * cubeSize) + hCube - z0;
 
                     cubeMap[x, y, z] = new Vector3(xCoord, yCoord, zCoord);
                 }
